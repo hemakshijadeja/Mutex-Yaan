@@ -32,9 +32,9 @@ void sat_db_init(SatelliteDB *db){
     db->satellites[i].vx = 0; 
     db->satellites[i].vy = 7500;
     db->satellites[i].vz = 0;
-    db->satellites[i].battery_pct = 95;
+    db->satellites[i].battery_percent = 95;
     db->satellites[i].temperature_c = 22;
-    db->satellites[i].cpu_usage_pct = 30;
+    db->satellites[i].cpu_usage_percent = 30;
     db->satellites[i].active = 1;
     db->satellites[i].last_updated = time(NULL);
 
@@ -47,9 +47,9 @@ void sat_db_init(SatelliteDB *db){
     db->satellites[i].vx = 7200; 
     db->satellites[i].vy = 0;
     db->satellites[i].vz = 200;
-    db->satellites[i].battery_pct = 80;
+    db->satellites[i].battery_percent = 80;
     db->satellites[i].temperature_c = 18;
-    db->satellites[i].cpu_usage_pct = 55;
+    db->satellites[i].cpu_usage_percent = 55;
     db->satellites[i].active = 1;
     db->satellites[i].last_updated = time(NULL);
 
@@ -62,9 +62,9 @@ void sat_db_init(SatelliteDB *db){
     db->satellites[i].vx = -3000; 
     db->satellites[i].vy = 6000;
     db->satellites[i].vz = 100;
-    db->satellites[i].battery_pct = 60;
+    db->satellites[i].battery_percent = 60;
     db->satellites[i].temperature_c = 35;
-    db->satellites[i].cpu_usage_pct = 70;
+    db->satellites[i].cpu_usage_percent = 70;
     db->satellites[i].active = 1;
     db->satellites[i].last_updated = time(NULL);
 
@@ -77,9 +77,9 @@ void sat_db_init(SatelliteDB *db){
     db->satellites[i].vx = 1000; 
     db->satellites[i].vy = -7000;
     db->satellites[i].vz = 500;
-    db->satellites[i].battery_pct = 45;
+    db->satellites[i].battery_percent = 45;
     db->satellites[i].temperature_c = 10;
-    db->satellites[i].cpu_usage_pct = 85;
+    db->satellites[i].cpu_usage_percent = 85;
     db->satellites[i].active = 1;
     db->satellites[i].last_updated = time(NULL);
 
@@ -92,9 +92,9 @@ void sat_db_init(SatelliteDB *db){
     db->satellites[i].vx = -5000; 
     db->satellites[i].vy = 2000;
     db->satellites[i].vz = -3000;
-    db->satellites[i].battery_pct = 100;
+    db->satellites[i].battery_percent = 100;
     db->satellites[i].temperature_c = 28;
-    db->satellites[i].cpu_usage_pct = 15;
+    db->satellites[i].cpu_usage_percent = 15;
     db->satellites[i].active = 1;
     db->satellites[i].last_updated = time(NULL);
 
@@ -186,9 +186,9 @@ int sat_update_telemetry(SatelliteDB *db, int sat_id, int battery_pct, int temp_
         return 0;
     }
 
-    db->satellites[index].battery_pct = battery_pct;
+    db->satellites[index].battery_percent = battery_pct;
     db->satellites[index].temperature_c = temp_c;
-    db->satellites[index].cpu_usage_pct = cpu_pct;
+    db->satellites[index].cpu_usage_percent = cpu_pct;
     db->satellites[index].last_updated = time(NULL);
 
     pthread_rwlock_unlock(&db->rwlock);
@@ -262,9 +262,9 @@ void sat_print_all(SatelliteDB *db){
                    db->satellites[i].x,
                    db->satellites[i].y,
                    db->satellites[i].z,
-                   db->satellites[i].battery_pct,
+                   db->satellites[i].battery_percent,
                    db->satellites[i].temperature_c,
-                   db->satellites[i].cpu_usage_pct);
+                   db->satellites[i].cpu_usage_percent);
             found = 1;
         }
     }

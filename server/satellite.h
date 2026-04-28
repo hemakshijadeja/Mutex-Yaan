@@ -9,7 +9,7 @@
 typedef struct{
     SatelliteTelemetry satellites[MAX_SATELLITES]; // the satellite array
     int count; // how many are active
-    pthread_rwlock_t wlock; // protects the array
+    pthread_rwlock_t rwlock; // protects the array
 } SatelliteDB;
 
 // initialises the SatelliteDB struct and loads demo satellites
