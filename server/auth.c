@@ -41,24 +41,24 @@ void auth_init(void){
     memset(user_table, 0, sizeof(user_table));
     user_count = 0;
 
-    add_user("hemy", "hemy27", ROLE_COMMANDER);
-    add_user("hard", "hemyhard", ROLE_COMMANDER);
-    add_user("sanjay", "sanjay15", ROLE_GUEST);
-    add_user("manav", "manav24", ROLE_SPECIALIST);
-    add_user("madhavi", "madhavi30", ROLE_SPECIALIST);
-    add_user("shailvi", "shailvi04", ROLE_GUEST);
+    add_user("user1", "pass1", ROLE_COMMANDER);
+    add_user("user2", "pass2", ROLE_COMMANDER);
+    add_user("user3", "pass3", ROLE_SPECIALIST);
+    add_user("user4", "pass4", ROLE_SPECIALIST);
+    add_user("user5", "pass5", ROLE_GUEST);
+    add_user("user6", "pass6", ROLE_GUEST);
 
     printf("[AUTH] User table loaded with %d accounts.\n", user_count);
 }
 
 // searches the user table for a matching username + password.
-int auth_login(char *username, char *password, Session *session){
+int auth_login(const char *username, const char *password, Session *session){
     if(username == NULL || password == NULL || session == NULL){
         return 0;
     }
     for(int i=0; i<user_count; i++){
         if(strcmp(user_table[i].username, username) == 0 && user_table[i].active == 1){
-            if(strcmp(user_table[i].password, passwrod) == 0){
+            if(strcmp(user_table[i].password, password) == 0){
                 session->logged_in = 1;
                 session->role = user_table[i].role;
                 strcpy(session->username, user_table[i].username);
@@ -67,7 +67,7 @@ int auth_login(char *username, char *password, Session *session){
 
             }
             else{
-                printf("[AUTH] Login SUCCESS - user: '%s' (wrong password)\n", username);
+                printf("[AUTH] Login FAILED - user: '%s' (wrong password)\n", username);
                 return 0;
             }
         }
@@ -94,7 +94,7 @@ int auth_check_permission(Session *session, int cmd){
         printf("[AUTH] Permission DENIED - not logged in (cmd=%d)\n", cmd);
         return 0;
     }
-    if(cmd < 1 || cmd >= 8){
+    if(cmd < 1 || cmd > 8){
         printf("[AUTH] Permission DENIED - unknown command code %d\n", cmd);
         return 0;
     }
@@ -110,7 +110,7 @@ int auth_check_permission(Session *session, int cmd){
 }
 
 // converts a role integer into a readable string
-char *auth_role_name*(int role){
+char *auth_role_name(int role){
     switch (role){
         case ROLE_COMMANDER: return "Mission Commander";
         case ROLE_SPECIALIST: return "Payload Specialist";
