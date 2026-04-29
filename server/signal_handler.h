@@ -3,6 +3,9 @@
 #ifndef SIGNAL_HANDLER_H
 #define SIGNAL_HANDLER_H
 
+/* Expose POSIX.1-2008 extensions (struct sigaction, SA_RESTART, etc.) */
+#define _POSIX_C_SOURCE 200809L
+
 #include "../common/shared_mem.h"
 #include "satellite.h"
 

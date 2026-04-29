@@ -1,6 +1,9 @@
 #ifndef SATELLITE_H
 #define SATELLITE_H
 
+/* Expose POSIX.1-2008 extensions (pthread_rwlock_t, etc.) */
+#define _POSIX_C_SOURCE 200809L
+
 #include <time.h> 
 #include <pthread.h>    
 #include "../common/protocol.h"

@@ -3,6 +3,9 @@
 #ifndef COMMAND_HANDLER_H
 #define COMMAND_HANDLER_H
 
+/* Expose POSIX.1-2008 extensions */
+#define _POSIX_C_SOURCE 200809L
+
 #include "../common/protocol.h"
 #include "auth.h"
 #include "satellite.h"

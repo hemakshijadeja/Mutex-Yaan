@@ -1,5 +1,8 @@
 // implements the command dispatcher declared in command_handler.h.
 
+/* Must appear before any system header to expose POSIX extensions */
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <string.h>
 #include <time.h>

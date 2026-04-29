@@ -1,3 +1,6 @@
+/* Must appear before any system header to expose POSIX extensions */
+#define _POSIX_C_SOURCE 200809L
+
 #include "shared_mem.h"
 
 SharedMemory *shm_setup(void){
@@ -98,4 +101,14 @@ int shm_read_alert(SharedMemory *shm, CollisionAlert *out){
     }
     pthread_mutex_unlock(&shm->lock);
     return found;
+}
+
+void shm_update_sat_positions(SharedMemory *shm, ShmSatSnapshot *snaps, int count){
+    if(shm == NULL || snaps == NULL || count <= 0) return;
+    if(count > MAX_SATELLITES) count = MAX_SATELLITES;
+
+    pthread_mutex_lock(&shm->lock);
+    memcpy(shm->sat_positions, snaps, count * sizeof(ShmSatSnapshot));
+    shm->sat_count = count;
+    pthread_mutex_unlock(&shm->lock);
 }

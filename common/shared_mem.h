@@ -1,6 +1,9 @@
 #ifndef SHARED_MEM_H
 #define SHARED_MEM_H
 
+/* Expose POSIX.1-2008 extensions */
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -9,6 +12,8 @@
 #include <sys/stat.h>
 #include <signal.h>
 #include <pthread.h>
+
+#include "protocol.h"
 
 #define SHM_NAME "/sat_network_shm"
 #define SHM_PERMS 0666
@@ -24,6 +29,13 @@ typedef struct{
     char description[64];
 } CollisionAlert;
 
+// live satellite position entry written by the server, read by the child
+typedef struct{
+    int sat_id;
+    int x, y, z;
+    int active;
+} ShmSatSnapshot;
+
 typedef struct{
     pthread_mutex_t lock;
     CollisionAlert alert;
@@ -31,6 +43,8 @@ typedef struct{
     pid_t server_pid;
     int alert_count;
     int child_alive;
+    ShmSatSnapshot sat_positions[MAX_SATELLITES]; // live positions written by server
+    int sat_count;
 } SharedMemory;
 
 SharedMemory *shm_setup(void);
@@ -44,5 +58,9 @@ void shm_detach(SharedMemory *shm);
 int shm_write_alert(SharedMemory *shm, CollisionAlert *alert);
 
 int shm_read_alert(SharedMemory *shm, CollisionAlert *out);
+
+// called by the server whenever satellite positions change — copies the new positions
+// into shared memory so the debris monitor child always works with live coordinates
+void shm_update_sat_positions(SharedMemory *shm, ShmSatSnapshot *snaps, int count);
 
 #endif

@@ -1,5 +1,8 @@
 // implements the SIGUSR1 handler for collision avoidance
 
+/* Must appear before any system header to expose POSIX extensions */
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
@@ -40,11 +43,11 @@ void handle_sigusr1(int sig){
     (void)sig;
 
     const char *msg = "[SIG] SIGUSR1 received — collision alert incoming!\n";
-    write(STDOUT_FILENO, msg, 50);
+    write(STDOUT_FILENO, msg, strlen(msg));
 
     if(g_sat_db == NULL || g_shm == NULL){
         const char *err = "[SIG] ERROR: handler fired before init — pointers are NULL.\n";
-        write(STDERR_FILENO, err, 55);
+        write(STDERR_FILENO, err, strlen(err));
         return;
     }
 
@@ -55,7 +58,7 @@ void handle_sigusr1(int sig){
 
     if(!shm_read_alert(g_shm, &alert)){
         const char *err = "[SIG] ERROR: shm_read_alert() failed — no action taken.\n";
-        write(STDERR_FILENO, err, 54);
+        write(STDERR_FILENO, err, strlen(err));
         return;
     }
 

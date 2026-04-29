@@ -1,5 +1,8 @@
 // Implements all satellite state functions declared in satellite.h
 
+/* Must appear before any system header to expose POSIX extensions */
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>    
 #include <string.h>
 #include <time.h>
@@ -135,7 +138,7 @@ int sat_get_all(SatelliteDB *db, SatelliteTelemetry out[]){
 
     pthread_rwlock_rdlock(&db->rwlock);
 
-    for(int i = 0; i < db->count; i++){
+    for(int i = 0; i < MAX_SATELLITES; i++){
         if(db->satellites[i].active == 1){
             out[copied] = db->satellites[i];
             copied++;
