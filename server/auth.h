@@ -4,7 +4,7 @@
 #ifndef AUTH_H
 #define AUTH_H
 
-#include "protocol.h"
+#include "../common/protocol.h"
 
 // When a client connects and logs in, the server creates one of these to remember who is on the other end of that socket connection.
 typedef struct{

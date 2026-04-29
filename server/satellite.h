@@ -3,7 +3,7 @@
 
 #include <time.h> 
 #include <pthread.h>    
-#include "protocol.h"
+#include "../common/protocol.h"
 
 // central shared data structure of the entire server
 typedef struct{

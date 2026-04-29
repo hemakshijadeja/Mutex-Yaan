@@ -135,7 +135,7 @@ int sat_get_all(SatelliteDB *db, SatelliteTelemetry out[]){
 
     pthread_rwlock_rdlock(&db->rwlock);
 
-    for(int i = 0; i < MAX_SATELLITES; i++){
+    for(int i = 0; i < db->count; i++){
         if(db->satellites[i].active == 1){
             out[copied] = db->satellites[i];
             copied++;
