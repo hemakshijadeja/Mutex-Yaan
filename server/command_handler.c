@@ -5,6 +5,7 @@
 #include <time.h>
 
 #include "command_handler.h"
+#include "telemetry_log.h"
 
 // Fills in a ResponsePacket quickly. Used by every handler below.
 static void make_response(ResponsePacket *resp, int code, int sat_id, const char *msg){
@@ -85,8 +86,8 @@ static void do_list_sats(ServerContext *ctx, ResponsePacket *resp){
     make_response(resp, RESP_OK, 0, msg);
 }
 
-// CMD_DUMP_TELEMETRY (6) — triggers a telemetry save for one satellite (ROLE_SPECIALIST+)
-static void do_dump_telemetry(ServerContext *ctx, const CommandPacket *cmd, ResponsePacket *resp){
+// CMD_DUMP_TELEMETRY (6) — saves one satellite's telemetry to CSV under fcntl lock (ROLE_SPECIALIST+)
+static void do_dump_telemetry(ServerContext *ctx, Session *session, const CommandPacket *cmd, ResponsePacket *resp){
     SatelliteTelemetry t;
 
     if(!sat_get_telemetry(ctx->sat_db, cmd->sat_id, &t)){
@@ -94,10 +95,16 @@ static void do_dump_telemetry(ServerContext *ctx, const CommandPacket *cmd, Resp
         return;
     }
 
+    // telemetry_log_write() acquires a pthread_mutex (intra-process) and then an
+    // fcntl F_SETLKW write lock (inter-process) before writing the CSV row
+    if(!telemetry_log_write(&t, session->username)){
+        make_response(resp, RESP_SERVER_ERROR, cmd->sat_id, "Failed to write telemetry to log file.");
+        return;
+    }
+
     char msg[MAX_RESPONSE_DATA_LEN];
-    snprintf(msg, sizeof(msg), "Telemetry dump queued for satellite %d. (log write pending telemetry_log.c)", cmd->sat_id);
+    snprintf(msg, sizeof(msg), "Telemetry for satellite %d written to log by %s.", cmd->sat_id, session->username);
     make_response(resp, RESP_OK, cmd->sat_id, msg);
-    printf("[CMD] Telemetry dump requested for satellite %d by '%s'.\n", cmd->sat_id, "session->username");
 }
 
 // CMD_ALTER_ORBIT (7) — reprograms a satellite's full state vector (ROLE_COMMANDER only)
@@ -180,7 +187,7 @@ void handle_command(ServerContext *ctx, Session *session, const CommandPacket *c
             break;
 
         case CMD_DUMP_TELEMETRY:
-            do_dump_telemetry(ctx, cmd, resp);
+            do_dump_telemetry(ctx, session, cmd, resp);
             break;
 
         case CMD_ALTER_ORBIT:
