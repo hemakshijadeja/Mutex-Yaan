@@ -3,14 +3,13 @@
 #ifndef COMMAND_HANDLER_H
 #define COMMAND_HANDLER_H
 
-/* Expose POSIX.1-2008 extensions */
 #define _POSIX_C_SOURCE 200809L
 
-#include "../common/protocol.h"
+#include "common/protocol.h"
 #include "auth.h"
 #include "satellite.h"
 #include "ground_station.h"
-#include "../common/shared_mem.h"
+#include "common/shared_mem.h"
 
 // Bundles every shared server resource into one struct. The server creates one of these at startup and passes a pointer to every worker thread.
 typedef struct {

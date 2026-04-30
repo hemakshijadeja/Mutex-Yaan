@@ -1,4 +1,3 @@
-/* Must appear before any system header to expose POSIX extensions */
 #define _POSIX_C_SOURCE 200809L
 
 #include "shared_mem.h"
@@ -35,8 +34,8 @@ SharedMemory *shm_setup(void){
     // initialise default demo debris
     shm->debris_count = 6;
     Debris default_debris[6] = {
-        {101,  7001,    5,    2,  -50,  7490,   10},
-        {102,   100, 8010, 1005, 7190,   -20,  195},
+        {101,  7000,    4,    0,    0,  7000,    0},
+        {102,    -3, 8000, 1000,-8000,     0,  200},
         {103, -4995, 5003, 2001,-3010,  5995,   98},
         {104,  3005,-5995,-1498,  998, -6998,  499},
         {105, -1998,-3998, 6001,-4998,  2001,-2999},
@@ -157,7 +156,7 @@ void shm_format_debris(SharedMemory *shm, char *buffer, size_t max_len){
     
     size_t offset = 0;
     APPEND("\n=== ACTIVE SPACE DEBRIS ===\n");
-    APPEND("ID   | Pos (x,y,z) km          | Vel (vx,vy,vz) m/s\n");
+    APPEND("ID   | Pos (x,y,z) km         | Vel (vx,vy,vz) m/s\n");
     APPEND("---------------------------------------------------\n");
 
     pthread_mutex_lock(&shm->lock);
@@ -166,8 +165,7 @@ void shm_format_debris(SharedMemory *shm, char *buffer, size_t max_len){
     } else {
         for(int i = 0; i < shm->debris_count; i++){
             Debris *d = &shm->debris_field[i];
-            APPEND("%-4d | %6d, %6d, %6d | %5d, %5d, %5d\n",
-                   d->debris_id, d->x, d->y, d->z, d->vx, d->vy, d->vz);
+            APPEND("%-4d | %6d, %6d, %6d | %5d, %5d, %5d\n", d->debris_id, d->x, d->y, d->z, d->vx, d->vy, d->vz);
         }
     }
     pthread_mutex_unlock(&shm->lock);

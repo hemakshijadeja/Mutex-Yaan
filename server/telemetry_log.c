@@ -1,6 +1,5 @@
 // implements fcntl-based telemetry logging to a CSV file
 
-/* Must appear before any system header to expose POSIX extensions */
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdio.h>

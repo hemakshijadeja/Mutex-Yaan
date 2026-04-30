@@ -1,7 +1,7 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
-/* Expose POSIX.1-2008 extensions (pthread types, sigaction, etc.) */
+// Expose POSIX.1-2008 extensions (pthread types, sigaction, etc.)
 #define _POSIX_C_SOURCE 200809L
 
 #include <time.h>

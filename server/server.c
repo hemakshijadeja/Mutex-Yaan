@@ -1,7 +1,6 @@
 // server.c — Satellite Network Server
 // ties together every subsystem
 
-/* Must appear before any system header to expose POSIX extensions */
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdio.h>
@@ -14,8 +13,8 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 
-#include "../common/protocol.h"
-#include "../common/shared_mem.h"
+#include "common/protocol.h"
+#include "common/shared_mem.h"
 #include "auth.h"
 #include "satellite.h"
 #include "ground_station.h"
@@ -47,6 +46,9 @@ static void sync_positions(void){
             snaps[n].x = g_sat_db.satellites[i].x;
             snaps[n].y = g_sat_db.satellites[i].y;
             snaps[n].z = g_sat_db.satellites[i].z;
+            snaps[n].vx = g_sat_db.satellites[i].vx;
+            snaps[n].vy = g_sat_db.satellites[i].vy;
+            snaps[n].vz = g_sat_db.satellites[i].vz;
             snaps[n].active = 1;
             n++;
         }
@@ -234,7 +236,7 @@ int main(void){
         return 1;
     }
 
-    printf("[SERVER] Listening on port %d. Ready for connections.\n\n", SERVER_PORT);
+    printf("[SERVER] Listening on port %d. Ready for connections.\n", SERVER_PORT);
 
     // accept loop — one pthread per client
     while(g_server_running){

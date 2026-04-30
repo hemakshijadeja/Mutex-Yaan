@@ -4,10 +4,9 @@
 #ifndef AUTH_H
 #define AUTH_H
 
-/* Expose POSIX.1-2008 extensions */
 #define _POSIX_C_SOURCE 200809L
 
-#include "../common/protocol.h"
+#include "common/protocol.h"
 
 // When a client connects and logs in, the server creates one of these to remember who is on the other end of that socket connection.
 typedef struct{

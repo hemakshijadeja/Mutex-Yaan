@@ -1,7 +1,6 @@
 // the server calls fork() and the child runs run_debris_monitor()
 // it simulates orbital debris trajectories, detects collisions writes a CollisionAlert into shared memory, and sends SIGUSR1 to the server PID
 
-/* Must appear before any system header to expose POSIX extensions */
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdio.h>
@@ -11,7 +10,7 @@
 #include <signal.h>
 #include <time.h>
 
-#include "../common/shared_mem.h"
+#include "common/shared_mem.h"
 
 // how often the monitor recalculates trajectories (seconds)
 #define SCAN_INTERVAL_S 5
@@ -21,6 +20,7 @@
 
 // returns the miss distance in metres, or -1 if no threat
 static int check_collision(Debris *d, ShmSatSnapshot *s){
+    // calculate current distance
     long dx = ((long)d->x - s->x) * 1000;
     long dy = ((long)d->y - s->y) * 1000;
     long dz = ((long)d->z - s->z) * 1000;
@@ -34,7 +34,21 @@ static int check_collision(Debris *d, ShmSatSnapshot *s){
         while(dist < q / dist) dist++;
     }
 
-    if(dist <= COLLISION_THRESHOLD_M) return (int)dist;
+    // Check if the objects are actually moving towards each other.
+    // Calculate the dot product of relative position and relative velocity.
+    long rx = (long)d->x - s->x;
+    long ry = (long)d->y - s->y;
+    long rz = (long)d->z - s->z;
+    
+    long rvx = (long)d->vx - s->vx;
+    long rvy = (long)d->vy - s->vy;
+    long rvz = (long)d->vz - s->vz;
+
+    long dot_product = rx * rvx + ry * rvy + rz * rvz;
+
+    // Trigger alert ONLY if they are within the threshold AND moving closer (dot < 0)
+    if(dist <= COLLISION_THRESHOLD_M && dot_product < 0) return (int)dist;
+    
     return -1;
 }
 
@@ -80,7 +94,6 @@ void run_debris_monitor(void){
 
     while(1){
         // take a local snapshot of the live satellite positions from shared memory
-        // holding the lock only long enough to copy — keeps the mutex window tiny
         ShmSatSnapshot live_sats[MAX_SATELLITES];
         int live_count = 0;
         
@@ -106,6 +119,7 @@ void run_debris_monitor(void){
             for(int s = 0; s < live_count; s++){
                 if(!live_sats[s].active) continue;
                 int miss_m = check_collision(&local_debris[d], &live_sats[s]);
+                
                 if(miss_m >= 0){
                     CollisionAlert alert;
                     memset(&alert, 0, sizeof(CollisionAlert));

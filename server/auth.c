@@ -1,6 +1,5 @@
 // This file implements user authentication and role-based authorization.
 
-/* Must appear before any system header to expose POSIX extensions */
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdio.h>

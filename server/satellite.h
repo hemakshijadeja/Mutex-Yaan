@@ -1,18 +1,17 @@
 #ifndef SATELLITE_H
 #define SATELLITE_H
 
-/* Expose POSIX.1-2008 extensions (pthread_rwlock_t, etc.) */
 #define _POSIX_C_SOURCE 200809L
 
 #include <time.h> 
 #include <pthread.h>    
-#include "../common/protocol.h"
+#include "common/protocol.h"
 
 // central shared data structure of the entire server
 typedef struct{
     SatelliteTelemetry satellites[MAX_SATELLITES]; // the satellite array
-    int count; // how many are active
-    pthread_rwlock_t rwlock; // protects the array
+    int count;
+    pthread_rwlock_t rwlock;
 } SatelliteDB;
 
 // initialises the SatelliteDB struct and loads demo satellites

@@ -1,6 +1,5 @@
 // implements the command dispatcher declared in command_handler.h.
 
-/* Must appear before any system header to expose POSIX extensions */
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdio.h>
@@ -24,7 +23,7 @@ static void make_response(ResponsePacket *resp, int code, int sat_id, const char
 static void do_login(Session *session, const CommandPacket *cmd, ResponsePacket *resp){
     if(auth_login(cmd->username, cmd->password, session)){
         char msg[MAX_RESPONSE_DATA_LEN];
-        snprintf(msg, sizeof(msg), "Login successful. Welcome, %s. Role: %s.", session->username, auth_role_name(session->role));
+        snprintf(msg, sizeof(msg), "Login successful. Welcome, %s. \nRole: %s.", session->username, auth_role_name(session->role));
         make_response(resp, RESP_AUTH_OK, 0, msg);
     } 
     else{
@@ -73,10 +72,10 @@ static void do_get_map(ServerContext *ctx, ResponsePacket *resp){
 
     char msg[MAX_RESPONSE_DATA_LEN];
     int offset = 0;
-    offset += snprintf(msg + offset, sizeof(msg) - offset, "%d active satellites: ", n);
+    offset += snprintf(msg + offset, sizeof(msg) - offset, "%d active satellites: \n", n);
 
     for(int i = 0; i < n && offset < (int)sizeof(msg) - 1; i++){
-        offset += snprintf(msg + offset, sizeof(msg) - offset, "[%d:(%d,%d,%d)] ", all[i].sat_id, all[i].x, all[i].y, all[i].z);
+        offset += snprintf(msg + offset, sizeof(msg) - offset, "[%d:(%d,%d,%d)]\n", all[i].sat_id, all[i].x, all[i].y, all[i].z);
     }
     make_response(resp, RESP_OK, 0, msg);
 }

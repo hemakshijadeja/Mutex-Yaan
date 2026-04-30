@@ -1,7 +1,6 @@
 #ifndef SHARED_MEM_H
 #define SHARED_MEM_H
 
-/* Expose POSIX.1-2008 extensions */
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdio.h>
@@ -43,6 +42,7 @@ typedef struct{
     int sat_id;
     int x, y, z;
     int active;
+    int vx, vy, vz;
 } ShmSatSnapshot;
 
 typedef struct{
@@ -54,7 +54,7 @@ typedef struct{
     int child_alive;
     ShmSatSnapshot sat_positions[MAX_SATELLITES]; // live positions written by server
     int sat_count;
-    Debris debris_field[MAX_DEBRIS];              // static/dynamic debris objects
+    Debris debris_field[MAX_DEBRIS];
     int debris_count;
 } SharedMemory;
 
@@ -70,8 +70,7 @@ int shm_write_alert(SharedMemory *shm, CollisionAlert *alert);
 
 int shm_read_alert(SharedMemory *shm, CollisionAlert *out);
 
-// called by the server whenever satellite positions change — copies the new positions
-// into shared memory so the debris monitor child always works with live coordinates
+// called by the server whenever satellite positions change
 void shm_update_sat_positions(SharedMemory *shm, ShmSatSnapshot *snaps, int count);
 
 // adds a new debris object to the shared memory array

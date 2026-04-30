@@ -1,10 +1,9 @@
 #ifndef GROUND_STATION_H
 #define GROUND_STATION_H
 
-/* Expose POSIX.1-2008 extensions */
 #define _POSIX_C_SOURCE 200809L
 
-#include "../common/protocol.h"
+#include "common/protocol.h"
 
 // has the array of all ground stations in the system
 typedef struct {

@@ -1,6 +1,5 @@
 // Ground Station Client — connects to the Satellite Network Server, logs in, and lets the operator send commands interactively.
 
-/* Must appear before any system header to expose POSIX extensions */
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdio.h>
@@ -10,7 +9,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-#include "../common/protocol.h"
+#include "common/protocol.h"
 
 #define SERVER_IP "127.0.0.1"
 
@@ -47,17 +46,18 @@ static int connect_to_server(void){
 static int send_command(int sockfd, CommandPacket *cmd, ResponsePacket *resp){
     ssize_t sent = send(sockfd, cmd, sizeof(CommandPacket), 0);
     if(sent != sizeof(CommandPacket)){
-        perror("[CLIENT] send() failed");
-        return 0;
+        fprintf(stderr, "\n[CLIENT] FATAL: Server disconnected or send() failed.\n");
+        exit(1); // Force the client to quit immediately
     }
 
     ssize_t received = recv(sockfd, resp, sizeof(ResponsePacket), MSG_WAITALL);
     if(received != sizeof(ResponsePacket)){
         if(received == 0)
-            fprintf(stderr, "[CLIENT] Server closed the connection.\n");
+            fprintf(stderr, "\n[CLIENT] FATAL: Server closed the connection.\n");
         else
-            perror("[CLIENT] recv() failed");
-        return 0;
+            perror("\n[CLIENT] FATAL: recv() failed");
+        
+        exit(1); // Force the client to quit immediately
     }
     return 1;
 }
@@ -80,7 +80,7 @@ static void print_response(ResponsePacket *resp){
         default: printf(" (UNKNOWN)"); break;
     }
     printf("\nTime : %s\n", time_str);
-    if(resp->sat_id > 0) printf("│ Sat  : %d\n", resp->sat_id);
+    if(resp->sat_id > 0) printf("Sat  : %d\n", resp->sat_id);
     printf("Data : %s\n", resp->data);
     printf("\n");
 }
@@ -271,7 +271,11 @@ int main(void){
         return 1;
     }
 
-    int role = read_int("Role (0=Guest, 1=Specialist, 2=Commander): ");
+    printf("\nChoose Authorization Level:\n");
+    printf("  [0] Guest\n");
+    printf("  [1] Payload Specialist\n");
+    printf("  [2] Mission Commander\n");
+    int role = read_int("Enter Role ID (0-2): ", sockfd);
 
     int logged_in = 0;
     char username[MAX_USERNAME_LEN] = {0};

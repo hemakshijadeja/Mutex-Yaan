@@ -1,6 +1,5 @@
 // Implements all satellite state functions declared in satellite.h
 
-/* Must appear before any system header to expose POSIX extensions */
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdio.h>    
@@ -264,9 +263,12 @@ void sat_format_all(SatelliteDB *db, char *buffer, size_t max_len){
         } \
     } while(0)
 
+    APPEND("\n=== ACTIVE SATELLITES ===\n");
+    APPEND("ID | Pos (x,y,z)              | Bat %% | Temp C | CPU %%\n");
+
     for(int i = 0; i < MAX_SATELLITES; i++){
         if(db->satellites[i].active == 1){
-            APPEND("ID: %-2d | Pos: (%d, %d, %d) | Bat: %d%% | Temp: %dC | CPU: %d%%\n",
+            APPEND("%-2d | (%6d, %6d, %6d) | %-5d | %-6d | %-4d\n",
                    db->satellites[i].sat_id,
                    db->satellites[i].x,
                    db->satellites[i].y,
