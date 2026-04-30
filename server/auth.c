@@ -14,15 +14,15 @@ static int user_count = 0;
 
 // this array defines the minimun role needed to run each command
 int min_role_for_cmd[9] = {
-    ROLE_GUEST,
-    ROLE_GUEST,
-    ROLE_GUEST,
-    ROLE_GUEST,
-    ROLE_GUEST,
-    ROLE_SPECIALIST,
-    ROLE_SPECIALIST,
-    ROLE_COMMANDER,
-    ROLE_COMMANDER
+    ROLE_GUEST,       // 0 — unused slot
+    ROLE_GUEST,       // 1 — CMD_LOGIN
+    ROLE_GUEST,       // 2 — CMD_LOGOUT
+    ROLE_GUEST,       // 3 — CMD_GET_TELEMETRY
+    ROLE_GUEST,       // 4 — CMD_GET_MAP
+    ROLE_GUEST,       // 5 — CMD_LIST_SATS
+    ROLE_SPECIALIST,  // 6 — CMD_DUMP_TELEMETRY
+    ROLE_COMMANDER,   // 7 — CMD_ALTER_ORBIT
+    ROLE_COMMANDER    // 8 — CMD_FIRE_THRUSTERS
 };
 
 // private helper that adds one user account to the user table

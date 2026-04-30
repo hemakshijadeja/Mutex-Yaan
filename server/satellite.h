@@ -39,7 +39,7 @@ int sat_fire_thrusters(SatelliteDB *db, int sat_id, int dvx, int dvy, int dvz);
 // directly sets a new position and velocity for a satellite, WRITE lock
 int sat_alter_orbit(SatelliteDB *db, int sat_id, int x, int y, int z, int vx, int vy, int vz);
 
-// prints a formatted table of all satellites to the terminal, READ lock
-void sat_print_all(SatelliteDB *db);
+// formats a table of all satellites into a buffer, READ lock
+void sat_format_all(SatelliteDB *db, char *buffer, size_t max_len);
 
 #endif

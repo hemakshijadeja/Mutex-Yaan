@@ -67,8 +67,8 @@ static void print_response(ResponsePacket *resp){
     struct tm *tm_info = localtime(&resp->timestamp);
     strftime(time_str, sizeof(time_str), "%H:%M:%S", tm_info);
 
-    printf("\n┌─ Server Response ──────────────────────────────────────\n");
-    printf("│ Code : %d", resp->code);
+    printf("\nServer Response: \n");
+    printf("Code : %d", resp->code);
     switch(resp->code){
         case RESP_OK: printf(" (OK)"); break;
         case RESP_AUTH_OK: printf(" (AUTH OK)"); break;
@@ -79,10 +79,10 @@ static void print_response(ResponsePacket *resp){
         case RESP_SERVER_ERROR: printf(" (SERVER ERROR)"); break;
         default: printf(" (UNKNOWN)"); break;
     }
-    printf("\n│ Time : %s\n", time_str);
+    printf("\nTime : %s\n", time_str);
     if(resp->sat_id > 0) printf("│ Sat  : %d\n", resp->sat_id);
-    printf("│ Data : %s\n", resp->data);
-    printf("└────────────────────────────────────────────────────────\n\n");
+    printf("Data : %s\n", resp->data);
+    printf("\n");
 }
 
 // prompts for credentials, sends CMD_LOGIN, returns 1 on success
@@ -114,7 +114,7 @@ static int do_login(int sockfd, char *username_out){
 
 static void print_menu(void){
     printf("╔══════════════════════════════════════════╗\n");
-    printf("║        SATELLITE NETWORK CONSOLE         ║\n");
+    printf("║                MUTEX-YAAN                ║\n");
     printf("╠══════════════════════════════════════════╣\n");
     printf("║  1  GET_TELEMETRY  (Guest+)              ║\n");
     printf("║  2  GET_MAP        (Guest+)              ║\n");
@@ -122,7 +122,6 @@ static void print_menu(void){
     printf("║  4  DUMP_TELEMETRY (Specialist+)         ║\n");
     printf("║  5  ALTER_ORBIT    (Commander only)      ║\n");
     printf("║  6  FIRE_THRUSTERS (Commander only)      ║\n");
-    printf("║  7  LOGOUT                               ║\n");
     printf("║  0  QUIT                                 ║\n");
     printf("╚══════════════════════════════════════════╝\n");
     printf("Choice: ");
@@ -170,6 +169,7 @@ static void cmd_dump_telemetry(int sockfd){
     memset(&cmd, 0, sizeof(cmd));
     cmd.cmd    = CMD_DUMP_TELEMETRY;
     cmd.sat_id = read_int("Satellite ID to dump: ");
+    cmd.station_id = read_int("Ground Station ID (1=Rajkot, 2=Blr, 3=Mum, 4=Del, 5=Chn): ");
     if(!send_command(sockfd, &cmd, &resp)) return;
     print_response(&resp);
 }
@@ -212,7 +212,7 @@ static int cmd_logout(int sockfd){
 
 int main(void){
     printf("\n╔══════════════════════════════════════════╗\n");
-    printf("║   Satellite Network Ground Station       ║\n");
+    printf("║           Welcome to Mutex-Yaan          ║\n");
     printf("╚══════════════════════════════════════════╝\n\n");
 
     int sockfd = connect_to_server();
@@ -257,12 +257,9 @@ int main(void){
             case 4: cmd_dump_telemetry(sockfd);  break;
             case 5: cmd_alter_orbit(sockfd);     break;
             case 6: cmd_fire_thrusters(sockfd);  break;
-            case 7:
-                cmd_logout(sockfd);
-                running = 0;
-                break;
             case 0:
-                printf("[CLIENT] Quitting without logout.\n");
+                printf("[CLIENT] Logging out and quitting...\n");
+                cmd_logout(sockfd);
                 running = 0;
                 break;
             default:

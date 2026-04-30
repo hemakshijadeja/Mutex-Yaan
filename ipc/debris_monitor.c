@@ -17,7 +17,7 @@
 #define SCAN_INTERVAL_S 5
 
 // how close a debris object has to come before it is a threat (metres)
-#define COLLISION_THRESHOLD_M 500
+#define COLLISION_THRESHOLD_M 5000
 
 // number of simulated debris objects in the environment
 #define NUM_DEBRIS 6
@@ -97,8 +97,6 @@ void run_debris_monitor(void){
     srand((unsigned int)time(NULL));
 
     while(1){
-        step_debris(SCAN_INTERVAL_S);
-
         // take a local snapshot of the live satellite positions from shared memory
         // holding the lock only long enough to copy — keeps the mutex window tiny
         ShmSatSnapshot live_sats[MAX_SATELLITES];
@@ -149,6 +147,7 @@ void run_debris_monitor(void){
                 }
             }
         }
+        step_debris(SCAN_INTERVAL_S);
         sleep(SCAN_INTERVAL_S);
     }
 

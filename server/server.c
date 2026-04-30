@@ -138,9 +138,9 @@ static void *client_thread(void *arg){
 }
 
 int main(void){
-    printf("\n[SERVER] ╔══════════════════════════════════════════╗\n");
-    printf("[SERVER] ║   Satellite Network Server starting...   ║\n");
-    printf("[SERVER] ╚══════════════════════════════════════════╝\n\n");
+    printf("\n╔══════════════════════════════════════════╗\n");
+    printf("║       Mutex-Yaan Server starting...      ║\n");
+    printf("╚══════════════════════════════════════════╝\n\n");
 
     auth_init();
     sat_db_init(&g_sat_db);

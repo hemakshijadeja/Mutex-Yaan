@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "command_handler.h"
 #include "telemetry_log.h"
@@ -80,13 +81,12 @@ static void do_get_map(ServerContext *ctx, ResponsePacket *resp){
     make_response(resp, RESP_OK, 0, msg);
 }
 
-// CMD_LIST_SATS (5) — prints a formatted table server-side and sends a count (ROLE_GUEST+)
+// CMD_LIST_SATS (5) — formats a table of satellites and sends it back (ROLE_GUEST+)
 static void do_list_sats(ServerContext *ctx, ResponsePacket *resp){
-    sat_print_all(ctx->sat_db);
-
-    char msg[MAX_RESPONSE_DATA_LEN];
-    snprintf(msg, sizeof(msg), "Satellite list printed to server terminal. %d total.", ctx->sat_db->count);
-    make_response(resp, RESP_OK, 0, msg);
+    sat_format_all(ctx->sat_db, resp->data, sizeof(resp->data));
+    resp->code = RESP_OK;
+    resp->sat_id = 0;
+    resp->timestamp = time(NULL);
 }
 
 // CMD_DUMP_TELEMETRY (6) — saves one satellite's telemetry to CSV under fcntl lock (ROLE_SPECIALIST+)
@@ -98,15 +98,27 @@ static void do_dump_telemetry(ServerContext *ctx, Session *session, const Comman
         return;
     }
 
-    // telemetry_log_write() acquires a pthread_mutex (intra-process) and then an
-    // fcntl F_SETLKW write lock (inter-process) before writing the CSV row
+    // Lock the chosen ground station to simulate an exclusive transmission link
+    int station_id = cmd->station_id;
+    if(!gs_lock(ctx->gs_db, station_id)){
+        make_response(resp, RESP_BAD_REQUEST, cmd->sat_id, "Invalid Ground Station ID. Please choose a valid station (1-5).");
+        return;
+    }
+
+    // Simulate transmission time so the lock contention is visible
+    sleep(2);
+
+    // telemetry_log_write() acquires an fcntl F_SETLKW write lock (inter-process) before writing the CSV row
     if(!telemetry_log_write(&t, session->username)){
+        gs_unlock(ctx->gs_db, station_id);
         make_response(resp, RESP_SERVER_ERROR, cmd->sat_id, "Failed to write telemetry to log file.");
         return;
     }
 
+    gs_unlock(ctx->gs_db, station_id);
+
     char msg[MAX_RESPONSE_DATA_LEN];
-    snprintf(msg, sizeof(msg), "Telemetry for satellite %d written to log by %s.", cmd->sat_id, session->username);
+    snprintf(msg, sizeof(msg), "Telemetry for satellite %d written to log via Station %d.", cmd->sat_id, station_id);
     make_response(resp, RESP_OK, cmd->sat_id, msg);
 }
 

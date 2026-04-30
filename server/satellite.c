@@ -247,20 +247,26 @@ int sat_alter_orbit(SatelliteDB *db, int sat_id, int x, int y, int z, int vx, in
     return 1;
 }
 
-// to be changed
-void sat_print_all(SatelliteDB *db){
+// formats a table of all satellites into a buffer
+void sat_format_all(SatelliteDB *db, char *buffer, size_t max_len){
     int found = 0;
-    if(db == NULL) return;
+    size_t offset = 0;
+    if(db == NULL || buffer == NULL || max_len == 0) return;
 
+    buffer[0] = '\0';
     pthread_rwlock_rdlock(&db->rwlock);
 
-    printf("\n+------+----------+----------+----------+-------+-------+-------+\n");
-    printf("| ID   | X (km)   | Y (km)   | Z (km)   | Bat%% | Temp  | CPU%% |\n");
-    printf("+------+----------+----------+----------+-------+-------+-------+\n");
+    int n;
+    #define APPEND(...) do { \
+        if (offset < max_len) { \
+            n = snprintf(buffer + offset, max_len - offset, __VA_ARGS__); \
+            if (n > 0) offset += ((size_t)n < max_len - offset) ? (size_t)n : (max_len - offset); \
+        } \
+    } while(0)
 
     for(int i = 0; i < MAX_SATELLITES; i++){
         if(db->satellites[i].active == 1){
-            printf("| %-4d | %-8d | %-8d | %-8d | %-5d | %-5d | %-5d |\n",
+            APPEND("ID: %-2d | Pos: (%d, %d, %d) | Bat: %d%% | Temp: %dC | CPU: %d%%\n",
                    db->satellites[i].sat_id,
                    db->satellites[i].x,
                    db->satellites[i].y,
@@ -273,10 +279,10 @@ void sat_print_all(SatelliteDB *db){
     }
 
     if(found == 0){
-        printf("| No active satellites in the database.                         |\n");
+        APPEND("No active satellites in the database.\n");
     }
 
-    printf("+------+----------+----------+----------+-------+-------+-------+\n\n");
+    #undef APPEND
 
     pthread_rwlock_unlock(&db->rwlock);
 }
