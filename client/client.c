@@ -271,11 +271,7 @@ int main(void){
         return 1;
     }
 
-    printf("\nChoose Authorization Level:\n");
-    printf("  [0] Guest\n");
-    printf("  [1] Payload Specialist\n");
-    printf("  [2] Mission Commander\n");
-    int role = read_int("Enter Role ID (0-2): ", sockfd);
+    int role = read_int("Role (0=Guest, 1=Specialist, 2=Commander): ");
 
     int logged_in = 0;
     char username[MAX_USERNAME_LEN] = {0};
