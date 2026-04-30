@@ -159,6 +159,63 @@ static void do_fire_thrusters(ServerContext *ctx, Session *session, const Comman
     make_response(resp, RESP_OK, cmd->sat_id, msg);
 }
 
+// CMD_REGISTER (9) — registers a new Guest user
+static void do_register(Session *session, const CommandPacket *cmd, ResponsePacket *resp){
+    (void)session;
+    if(auth_register(cmd->username, cmd->password)){
+        make_response(resp, RESP_OK, 0, "Registration successful. You can now log in.");
+    } else {
+        make_response(resp, RESP_BAD_REQUEST, 0, "Registration failed. Username may be taken or table full.");
+    }
+}
+
+// CMD_LIST_DEBRIS (10) — formats a table of debris and sends it back (ROLE_GUEST+)
+static void do_list_debris(ServerContext *ctx, ResponsePacket *resp){
+    shm_format_debris(ctx->shm, resp->data, sizeof(resp->data));
+    resp->code = RESP_OK;
+    resp->sat_id = 0;
+    resp->timestamp = time(NULL);
+}
+
+// CMD_LIST_GS (11) — formats a table of ground stations and sends it back (ROLE_GUEST+)
+static void do_list_gs(ServerContext *ctx, ResponsePacket *resp){
+    gs_format_all(ctx->gs_db, resp->data, sizeof(resp->data));
+    resp->code = RESP_OK;
+    resp->sat_id = 0;
+    resp->timestamp = time(NULL);
+}
+
+// CMD_ADD_SATELLITE (12) — adds a new satellite (ROLE_SPECIALIST+)
+static void do_add_satellite(ServerContext *ctx, Session *session, const CommandPacket *cmd, ResponsePacket *resp){
+    int x, y, z, vx, vy, vz;
+    if(sscanf(cmd->payload, "%d %d %d %d %d %d", &x, &y, &z, &vx, &vy, &vz) != 6){
+        make_response(resp, RESP_BAD_REQUEST, 0, "Bad payload. Expected: 'x y z vx vy vz'.");
+        return;
+    }
+    if(sat_add(ctx->sat_db, x, y, z, vx, vy, vz)){
+        char msg[MAX_RESPONSE_DATA_LEN];
+        snprintf(msg, sizeof(msg), "Satellite added successfully by %s.", session->username);
+        make_response(resp, RESP_OK, 0, msg);
+    } else {
+        make_response(resp, RESP_SERVER_ERROR, 0, "Failed to add satellite. Database full.");
+    }
+}
+
+// CMD_ADD_DEBRIS (13) — adds new debris to the shared memory (ROLE_SPECIALIST+)
+static void do_add_debris(ServerContext *ctx, Session *session, const CommandPacket *cmd, ResponsePacket *resp){
+    int x, y, z, vx, vy, vz;
+    if(sscanf(cmd->payload, "%d %d %d %d %d %d", &x, &y, &z, &vx, &vy, &vz) != 6){
+        make_response(resp, RESP_BAD_REQUEST, 0, "Bad payload. Expected: 'x y z vx vy vz'.");
+        return;
+    }
+    if(shm_add_debris(ctx->shm, x, y, z, vx, vy, vz)){
+        char msg[MAX_RESPONSE_DATA_LEN];
+        snprintf(msg, sizeof(msg), "Debris added successfully by %s.", session->username);
+        make_response(resp, RESP_OK, 0, msg);
+    } else {
+        make_response(resp, RESP_SERVER_ERROR, 0, "Failed to add debris. Shared memory array full.");
+    }
+}
 
 void handle_command(ServerContext *ctx, Session *session, const CommandPacket *cmd, ResponsePacket *resp){
     memset(resp, 0, sizeof(ResponsePacket));
@@ -170,8 +227,8 @@ void handle_command(ServerContext *ctx, Session *session, const CommandPacket *c
     }
     printf("[CMD] Received command %d from user '%s' (role: %s).\n", cmd->cmd, session->logged_in ? session->username : "<not logged in>", auth_role_name(session->role));
 
-    if(cmd->cmd != CMD_LOGIN && !session->logged_in){
-        make_response(resp, RESP_UNAUTHORIZED, 0, "Not logged in. Send CMD_LOGIN first.");
+    if(cmd->cmd != CMD_LOGIN && cmd->cmd != CMD_REGISTER && !session->logged_in){
+        make_response(resp, RESP_UNAUTHORIZED, 0, "Not logged in. Send CMD_LOGIN or CMD_REGISTER first.");
         return;
     }
     if(!auth_check_permission(session, cmd->cmd)){
@@ -211,6 +268,26 @@ void handle_command(ServerContext *ctx, Session *session, const CommandPacket *c
 
         case CMD_FIRE_THRUSTERS:
             do_fire_thrusters(ctx, session, cmd, resp);
+            break;
+
+        case CMD_REGISTER:
+            do_register(session, cmd, resp);
+            break;
+
+        case CMD_LIST_DEBRIS:
+            do_list_debris(ctx, resp);
+            break;
+
+        case CMD_LIST_GS:
+            do_list_gs(ctx, resp);
+            break;
+
+        case CMD_ADD_SATELLITE:
+            do_add_satellite(ctx, session, cmd, resp);
+            break;
+
+        case CMD_ADD_DEBRIS:
+            do_add_debris(ctx, session, cmd, resp);
             break;
 
         default:

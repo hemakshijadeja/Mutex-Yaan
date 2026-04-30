@@ -72,4 +72,25 @@ void handle_sigusr1(int sig){
     }
 
     printf("[SIG] Satellite %d thrusters fired successfully. Collision averted.\n", alert.sat_id);
+
+    // CRITICAL: Push the new displaced positions to shared memory immediately!
+    // Without this, the debris monitor child process continues to see the OLD position
+    // and will trigger another alert in the next scan cycle, causing an infinite loop.
+    ShmSatSnapshot snaps[MAX_SATELLITES];
+    int count = 0;
+    
+    pthread_rwlock_rdlock(&g_sat_db->rwlock);
+    for(int i = 0; i < MAX_SATELLITES; i++){
+        if(g_sat_db->satellites[i].active){
+            snaps[count].sat_id = g_sat_db->satellites[i].sat_id;
+            snaps[count].x = g_sat_db->satellites[i].x;
+            snaps[count].y = g_sat_db->satellites[i].y;
+            snaps[count].z = g_sat_db->satellites[i].z;
+            snaps[count].active = 1;
+            count++;
+        }
+    }
+    pthread_rwlock_unlock(&g_sat_db->rwlock);
+
+    shm_update_sat_positions(g_shm, snaps, count);
 }

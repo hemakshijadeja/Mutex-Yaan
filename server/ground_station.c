@@ -132,3 +132,27 @@ void gs_print_all(GroundStationDB *db){
     }
     printf("+----+---------------------+------+-------+--------+\n\n");
 }
+
+#define APPEND(...) do { \
+    int n = snprintf(buffer + offset, max_len - offset, __VA_ARGS__); \
+    if (n > 0) offset += ((size_t)n < max_len - offset) ? (size_t)n : (max_len - offset); \
+} while(0)
+
+void gs_format_all(GroundStationDB *db, char *buffer, size_t max_len){
+    if(db == NULL || buffer == NULL || max_len == 0) return;
+    size_t offset = 0;
+    buffer[0] = '\0';
+
+    APPEND("\n=== ACTIVE GROUND STATIONS ===\n");
+    APPEND("ID | Name                | Lat  | Long  | Status\n");
+    APPEND("--------------------------------------------------\n");
+
+    for(int i = 0; i < db->count; i++){
+        APPEND("%-2d | %-19s | %-4d | %-5d | %-6s\n",
+               db->stations[i].station_id,
+               db->stations[i].name,
+               db->stations[i].latitude,
+               db->stations[i].longitude,
+               db->stations[i].busy == 1 ? "BUSY" : "FREE");
+    }
+}

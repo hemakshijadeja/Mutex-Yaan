@@ -18,6 +18,15 @@
 #define SHM_NAME "/sat_network_shm"
 #define SHM_PERMS 0666
 
+#define MAX_DEBRIS 32
+
+// simulated debris object
+typedef struct{
+    int debris_id;
+    int x, y, z; 
+    int vx, vy, vz;
+} Debris;
+
 typedef struct{
     int debris_id;
     int sat_id;
@@ -45,6 +54,8 @@ typedef struct{
     int child_alive;
     ShmSatSnapshot sat_positions[MAX_SATELLITES]; // live positions written by server
     int sat_count;
+    Debris debris_field[MAX_DEBRIS];              // static/dynamic debris objects
+    int debris_count;
 } SharedMemory;
 
 SharedMemory *shm_setup(void);
@@ -62,5 +73,11 @@ int shm_read_alert(SharedMemory *shm, CollisionAlert *out);
 // called by the server whenever satellite positions change — copies the new positions
 // into shared memory so the debris monitor child always works with live coordinates
 void shm_update_sat_positions(SharedMemory *shm, ShmSatSnapshot *snaps, int count);
+
+// adds a new debris object to the shared memory array
+int shm_add_debris(SharedMemory *shm, int x, int y, int z, int vx, int vy, int vz);
+
+// formats the list of all debris in shared memory into a string
+void shm_format_debris(SharedMemory *shm, char *buffer, size_t max_len);
 
 #endif

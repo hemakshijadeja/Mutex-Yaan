@@ -21,6 +21,9 @@ void auth_init(void); // call this once when the server starts. It sets up a moc
 // Checks the given username and password against the user table.
 int auth_login(const char *username, const char *password, Session *session); //returns 1 on success, 0 on failure
 
+// Registers a new guest user.
+int auth_register(const char *username, const char *password);
+
 // Clears the session so the client is no longer considered logged in. Should be called when the client sends CMD_LOGOUT or disconnects.
 void auth_logout(Session *session);
 

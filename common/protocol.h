@@ -30,6 +30,11 @@
 #define CMD_DUMP_TELEMETRY 6
 #define CMD_ALTER_ORBIT 7
 #define CMD_FIRE_THRUSTERS 8
+#define CMD_REGISTER 9
+#define CMD_LIST_DEBRIS 10
+#define CMD_LIST_GS 11
+#define CMD_ADD_SATELLITE 12
+#define CMD_ADD_DEBRIS 13
 
 #define RESP_OK 200
 #define RESP_AUTH_OK 201
@@ -39,7 +44,7 @@
 #define RESP_FORBIDDEN 403
 #define RESP_SERVER_ERROR 500
 
-extern int min_role_for_cmd[9];
+extern int min_role_for_cmd[14];
 
 typedef struct {
     int cmd;

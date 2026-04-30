@@ -13,7 +13,7 @@ static UserRecord user_table[MAX_USERS];
 static int user_count = 0;
 
 // this array defines the minimun role needed to run each command
-int min_role_for_cmd[9] = {
+int min_role_for_cmd[14] = {
     ROLE_GUEST,       // 0 — unused slot
     ROLE_GUEST,       // 1 — CMD_LOGIN
     ROLE_GUEST,       // 2 — CMD_LOGOUT
@@ -22,7 +22,12 @@ int min_role_for_cmd[9] = {
     ROLE_GUEST,       // 5 — CMD_LIST_SATS
     ROLE_SPECIALIST,  // 6 — CMD_DUMP_TELEMETRY
     ROLE_COMMANDER,   // 7 — CMD_ALTER_ORBIT
-    ROLE_COMMANDER    // 8 — CMD_FIRE_THRUSTERS
+    ROLE_COMMANDER,   // 8 — CMD_FIRE_THRUSTERS
+    ROLE_GUEST,       // 9 — CMD_REGISTER
+    ROLE_GUEST,       // 10 — CMD_LIST_DEBRIS
+    ROLE_GUEST,       // 11 — CMD_LIST_GS
+    ROLE_SPECIALIST,  // 12 — CMD_ADD_SATELLITE
+    ROLE_SPECIALIST   // 13 — CMD_ADD_DEBRIS
 };
 
 // private helper that adds one user account to the user table
@@ -79,6 +84,21 @@ int auth_login(const char *username, const char *password, Session *session){
     return 0;
 }
 
+int auth_register(const char *username, const char *password){
+    if(user_count >= MAX_USERS){
+        return 0; // table full
+    }
+    // check if user already exists
+    for(int i = 0; i < user_count; i++){
+        if(user_table[i].active && strcmp(user_table[i].username, username) == 0){
+            return 0; // username taken
+        }
+    }
+    add_user((char *)username, (char *)password, ROLE_GUEST);
+    printf("[AUTH] New Guest user registered: '%s'\n", username);
+    return 1;
+}
+
 // clears the session struct so the client is no longer logged in
 void auth_logout(Session *session){
     if(session == NULL) return;
@@ -92,12 +112,12 @@ void auth_logout(Session *session){
 int auth_check_permission(Session *session, int cmd){
     int required_role;
     if(session == NULL) return 0;
-    if(cmd == CMD_LOGIN) return 1;
+    if(cmd == CMD_LOGIN || cmd == CMD_REGISTER) return 1;
     if(session->logged_in == 0){
         printf("[AUTH] Permission DENIED - not logged in (cmd=%d)\n", cmd);
         return 0;
     }
-    if(cmd < 1 || cmd > 8){
+    if(cmd < 1 || cmd > 13){
         printf("[AUTH] Permission DENIED - unknown command code %d\n", cmd);
         return 0;
     }

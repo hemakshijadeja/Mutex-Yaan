@@ -95,6 +95,7 @@ static void *client_thread(void *arg){
     ServerContext ctx;
     ctx.sat_db = &g_sat_db;
     ctx.gs_db  = &g_gs_db;
+    ctx.shm    = g_shm;
 
     CommandPacket  cmd;
     ResponsePacket resp;
@@ -118,7 +119,7 @@ static void *client_thread(void *arg){
         handle_command(&ctx, &session, &cmd, &resp);
 
         // after any command that moves a satellite, push the new positions into shared memory so the debris monitor child works with fresh coordinates
-        if(cmd.cmd == CMD_ALTER_ORBIT || cmd.cmd == CMD_FIRE_THRUSTERS){
+        if(cmd.cmd == CMD_ALTER_ORBIT || cmd.cmd == CMD_FIRE_THRUSTERS || cmd.cmd == CMD_ADD_SATELLITE){
             if(resp.code == RESP_OK) sync_positions();
         }
 

@@ -10,11 +10,13 @@
 #include "auth.h"
 #include "satellite.h"
 #include "ground_station.h"
+#include "../common/shared_mem.h"
 
 // Bundles every shared server resource into one struct. The server creates one of these at startup and passes a pointer to every worker thread.
 typedef struct {
     SatelliteDB *sat_db; // the satellite state array + RW lock
     GroundStationDB *gs_db; // the ground station array + per-station mutexes
+    SharedMemory *shm; // the shared memory segment
 } ServerContext;
 
 // The main dispatch function. Called once per incoming CommandPacket. Checks the session, enforces role-based permissions, executes the command, and writes the result into *resp. The caller is responsible for sending *resp back over the socket.

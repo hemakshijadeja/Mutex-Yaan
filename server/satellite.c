@@ -286,3 +286,32 @@ void sat_format_all(SatelliteDB *db, char *buffer, size_t max_len){
 
     pthread_rwlock_unlock(&db->rwlock);
 }
+
+// adds a new satellite and returns 1 on success, 0 if full
+int sat_add(SatelliteDB *db, int x, int y, int z, int vx, int vy, int vz){
+    if(db == NULL) return 0;
+    int success = 0;
+    
+    pthread_rwlock_wrlock(&db->rwlock);
+    for(int i = 0; i < MAX_SATELLITES; i++){
+        if(db->satellites[i].active == 0){
+            db->satellites[i].sat_id = i + 1;
+            db->satellites[i].x = x;
+            db->satellites[i].y = y;
+            db->satellites[i].z = z;
+            db->satellites[i].vx = vx;
+            db->satellites[i].vy = vy;
+            db->satellites[i].vz = vz;
+            db->satellites[i].battery_percent = 100;
+            db->satellites[i].temperature_c = 20;
+            db->satellites[i].cpu_usage_percent = 10;
+            db->satellites[i].active = 1;
+            db->satellites[i].last_updated = time(NULL);
+            db->count++;
+            success = 1;
+            break;
+        }
+    }
+    pthread_rwlock_unlock(&db->rwlock);
+    return success;
+}

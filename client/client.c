@@ -112,19 +112,47 @@ static int do_login(int sockfd, char *username_out){
     return 0;
 }
 
-static void print_menu(void){
+static int do_register(int sockfd){
+    CommandPacket cmd;
+    ResponsePacket resp;
+    memset(&cmd, 0, sizeof(cmd));
+
+    printf("\n=== Guest Registration ===\n");
+    printf("Username: ");
+    if(fgets(cmd.username, sizeof(cmd.username), stdin) == NULL) return 0;
+    cmd.username[strcspn(cmd.username, "\n")] = '\0';
+
+    printf("Password: ");
+    if(fgets(cmd.password, sizeof(cmd.password), stdin) == NULL) return 0;
+    cmd.password[strcspn(cmd.password, "\n")] = '\0';
+
+    cmd.cmd = CMD_REGISTER;
+
+    if(!send_command(sockfd, &cmd, &resp)) return 0;
+    print_response(&resp);
+    return (resp.code == RESP_OK);
+}
+
+static void print_menu(int role){
     printf("╔══════════════════════════════════════════╗\n");
     printf("║                MUTEX-YAAN                ║\n");
     printf("╠══════════════════════════════════════════╣\n");
-    printf("║  1  GET_TELEMETRY  (Guest+)              ║\n");
-    printf("║  2  GET_MAP        (Guest+)              ║\n");
-    printf("║  3  LIST_SATS      (Guest+)              ║\n");
-    printf("║  4  DUMP_TELEMETRY (Specialist+)         ║\n");
-    printf("║  5  ALTER_ORBIT    (Commander only)      ║\n");
-    printf("║  6  FIRE_THRUSTERS (Commander only)      ║\n");
+    printf("║  1  GET_TELEMETRY                        ║\n");
+    printf("║  2  GET_MAP                              ║\n");
+    printf("║  3  LIST_SATS                            ║\n");
+    printf("║  4  LIST_DEBRIS                          ║\n");
+    printf("║  5  LIST_GROUND_STATIONS                 ║\n");
+    if(role >= ROLE_SPECIALIST){
+        printf("║  6  ADD_SATELLITE                        ║\n");
+        printf("║  7  ADD_DEBRIS                           ║\n");
+        printf("║  8  DUMP_TELEMETRY                       ║\n");
+    }
+    if(role >= ROLE_COMMANDER){
+        printf("║  9  ALTER_ORBIT                          ║\n");
+        printf("║ 10  FIRE_THRUSTERS                       ║\n");
+    }
     printf("║  0  QUIT                                 ║\n");
     printf("╚══════════════════════════════════════════╝\n");
-    printf("Choice: ");
 }
 
 // reads a single integer from stdin, returns -1 on bad input
@@ -136,50 +164,75 @@ static int read_int(const char *prompt){
 }
 
 static void cmd_get_telemetry(int sockfd){
-    CommandPacket cmd;
-    ResponsePacket resp;
-    memset(&cmd, 0, sizeof(cmd));
-    cmd.cmd    = CMD_GET_TELEMETRY;
+    CommandPacket cmd; ResponsePacket resp; memset(&cmd, 0, sizeof(cmd));
+    cmd.cmd = CMD_GET_TELEMETRY;
     cmd.sat_id = read_int("Satellite ID: ");
     if(!send_command(sockfd, &cmd, &resp)) return;
     print_response(&resp);
 }
 
 static void cmd_get_map(int sockfd){
-    CommandPacket cmd;
-    ResponsePacket resp;
-    memset(&cmd, 0, sizeof(cmd));
+    CommandPacket cmd; ResponsePacket resp; memset(&cmd, 0, sizeof(cmd));
     cmd.cmd = CMD_GET_MAP;
     if(!send_command(sockfd, &cmd, &resp)) return;
     print_response(&resp);
 }
 
 static void cmd_list_sats(int sockfd){
-    CommandPacket cmd;
-    ResponsePacket resp;
-    memset(&cmd, 0, sizeof(cmd));
+    CommandPacket cmd; ResponsePacket resp; memset(&cmd, 0, sizeof(cmd));
     cmd.cmd = CMD_LIST_SATS;
     if(!send_command(sockfd, &cmd, &resp)) return;
     print_response(&resp);
 }
 
-static void cmd_dump_telemetry(int sockfd){
-    CommandPacket cmd;
-    ResponsePacket resp;
-    memset(&cmd, 0, sizeof(cmd));
-    cmd.cmd    = CMD_DUMP_TELEMETRY;
-    cmd.sat_id = read_int("Satellite ID to dump: ");
-    cmd.station_id = read_int("Ground Station ID (1=Rajkot, 2=Blr, 3=Mum, 4=Del, 5=Chn): ");
+static void cmd_list_debris(int sockfd){
+    CommandPacket cmd; ResponsePacket resp; memset(&cmd, 0, sizeof(cmd));
+    cmd.cmd = CMD_LIST_DEBRIS;
     if(!send_command(sockfd, &cmd, &resp)) return;
     print_response(&resp);
 }
 
-static void cmd_alter_orbit(int sockfd){
-    CommandPacket cmd;
-    ResponsePacket resp;
-    memset(&cmd, 0, sizeof(cmd));
-    cmd.cmd    = CMD_ALTER_ORBIT;
+static void cmd_list_gs(int sockfd){
+    CommandPacket cmd; ResponsePacket resp; memset(&cmd, 0, sizeof(cmd));
+    cmd.cmd = CMD_LIST_GS;
+    if(!send_command(sockfd, &cmd, &resp)) return;
+    print_response(&resp);
+}
+
+static void cmd_add_satellite(int sockfd){
+    CommandPacket cmd; ResponsePacket resp; memset(&cmd, 0, sizeof(cmd));
+    cmd.cmd = CMD_ADD_SATELLITE;
+    printf("Enter new satellite state (x y z vx vy vz): ");
+    if(fgets(cmd.payload, sizeof(cmd.payload), stdin) == NULL) return;
+    cmd.payload[strcspn(cmd.payload, "\n")] = '\0';
+    if(!send_command(sockfd, &cmd, &resp)) return;
+    print_response(&resp);
+}
+
+static void cmd_add_debris(int sockfd){
+    CommandPacket cmd; ResponsePacket resp; memset(&cmd, 0, sizeof(cmd));
+    cmd.cmd = CMD_ADD_DEBRIS;
+    printf("Enter new debris state (x y z vx vy vz): ");
+    if(fgets(cmd.payload, sizeof(cmd.payload), stdin) == NULL) return;
+    cmd.payload[strcspn(cmd.payload, "\n")] = '\0';
+    if(!send_command(sockfd, &cmd, &resp)) return;
+    print_response(&resp);
+}
+
+static void cmd_dump_telemetry(int sockfd, int station_id){
+    CommandPacket cmd; ResponsePacket resp; memset(&cmd, 0, sizeof(cmd));
+    cmd.cmd = CMD_DUMP_TELEMETRY;
+    cmd.sat_id = read_int("Satellite ID to dump: ");
+    cmd.station_id = station_id;
+    if(!send_command(sockfd, &cmd, &resp)) return;
+    print_response(&resp);
+}
+
+static void cmd_alter_orbit(int sockfd, int station_id){
+    CommandPacket cmd; ResponsePacket resp; memset(&cmd, 0, sizeof(cmd));
+    cmd.cmd = CMD_ALTER_ORBIT;
     cmd.sat_id = read_int("Satellite ID: ");
+    cmd.station_id = station_id;
     printf("Enter new state vector (x y z vx vy vz): ");
     if(fgets(cmd.payload, sizeof(cmd.payload), stdin) == NULL) return;
     cmd.payload[strcspn(cmd.payload, "\n")] = '\0';
@@ -187,12 +240,11 @@ static void cmd_alter_orbit(int sockfd){
     print_response(&resp);
 }
 
-static void cmd_fire_thrusters(int sockfd){
-    CommandPacket cmd;
-    ResponsePacket resp;
-    memset(&cmd, 0, sizeof(cmd));
-    cmd.cmd    = CMD_FIRE_THRUSTERS;
+static void cmd_fire_thrusters(int sockfd, int station_id){
+    CommandPacket cmd; ResponsePacket resp; memset(&cmd, 0, sizeof(cmd));
+    cmd.cmd = CMD_FIRE_THRUSTERS;
     cmd.sat_id = read_int("Satellite ID: ");
+    cmd.station_id = station_id;
     printf("Enter delta-V (dvx dvy dvz) in m/s: ");
     if(fgets(cmd.payload, sizeof(cmd.payload), stdin) == NULL) return;
     cmd.payload[strcspn(cmd.payload, "\n")] = '\0';
@@ -201,9 +253,7 @@ static void cmd_fire_thrusters(int sockfd){
 }
 
 static int cmd_logout(int sockfd){
-    CommandPacket cmd;
-    ResponsePacket resp;
-    memset(&cmd, 0, sizeof(cmd));
+    CommandPacket cmd; ResponsePacket resp; memset(&cmd, 0, sizeof(cmd));
     cmd.cmd = CMD_LOGOUT;
     if(!send_command(sockfd, &cmd, &resp)) return 0;
     print_response(&resp);
@@ -221,42 +271,76 @@ int main(void){
         return 1;
     }
 
+    int role = read_int("Role (0=Guest, 1=Specialist, 2=Commander): ");
+
+    int logged_in = 0;
     char username[MAX_USERNAME_LEN] = {0};
 
-    // keep retrying login until it succeeds
-    int logged_in = 0;
-    int login_attempts = 0;
     while(!logged_in){
-        if(login_attempts >= 3){
-            printf("[CLIENT] Too many failed login attempts. Disconnecting.\n");
-            close(sockfd);
-            return 1;
+        if(role == ROLE_GUEST){
+            printf("\n[1] Login\n[2] Register\n[0] Quit\n");
+            int choice = read_int("Choice: ");
+            if(choice == 1){
+                logged_in = do_login(sockfd, username);
+            } else if(choice == 2){
+                do_register(sockfd);
+            } else if(choice == 0){
+                close(sockfd);
+                return 0;
+            } else {
+                printf("Invalid choice.\n");
+            }
+        } else {
+            printf("\n[1] Login\n[0] Quit\n");
+            int choice = read_int("Choice: ");
+            if(choice == 1){
+                logged_in = do_login(sockfd, username);
+            } else if(choice == 0){
+                close(sockfd);
+                return 0;
+            } else {
+                printf("Invalid choice.\n");
+            }
         }
-        logged_in = do_login(sockfd, username);
-        if(!logged_in){
-            printf("[CLIENT] Login failed. Try again.\n");
-        }
-        login_attempts++;
     }
 
-    printf("[CLIENT] Logged in as '%s'. Welcome.\n\n", username);
+    int my_station_id = 0;
+    if(role >= ROLE_SPECIALIST){
+        my_station_id = read_int("\nEnter Ground Station ID (1-5): ");
+    }
 
     // main interactive loop
     int running = 1;
     while(running){
-        print_menu();
-
-        char choice_buf[16];
-        if(fgets(choice_buf, sizeof(choice_buf), stdin) == NULL) break;
-        int choice = atoi(choice_buf);
+        print_menu(role);
+        int choice = read_int("Choice: ");
 
         switch(choice){
-            case 1: cmd_get_telemetry(sockfd);  break;
-            case 2: cmd_get_map(sockfd);         break;
-            case 3: cmd_list_sats(sockfd);       break;
-            case 4: cmd_dump_telemetry(sockfd);  break;
-            case 5: cmd_alter_orbit(sockfd);     break;
-            case 6: cmd_fire_thrusters(sockfd);  break;
+            case 1: cmd_get_telemetry(sockfd); break;
+            case 2: cmd_get_map(sockfd); break;
+            case 3: cmd_list_sats(sockfd); break;
+            case 4: cmd_list_debris(sockfd); break;
+            case 5: cmd_list_gs(sockfd); break;
+            case 6: 
+                if(role >= ROLE_SPECIALIST) cmd_add_satellite(sockfd); 
+                else printf("Invalid choice.\n"); 
+                break;
+            case 7: 
+                if(role >= ROLE_SPECIALIST) cmd_add_debris(sockfd); 
+                else printf("Invalid choice.\n"); 
+                break;
+            case 8: 
+                if(role >= ROLE_SPECIALIST) cmd_dump_telemetry(sockfd, my_station_id); 
+                else printf("Invalid choice.\n"); 
+                break;
+            case 9: 
+                if(role >= ROLE_COMMANDER) cmd_alter_orbit(sockfd, my_station_id); 
+                else printf("Invalid choice.\n"); 
+                break;
+            case 10: 
+                if(role >= ROLE_COMMANDER) cmd_fire_thrusters(sockfd, my_station_id); 
+                else printf("Invalid choice.\n"); 
+                break;
             case 0:
                 printf("[CLIENT] Logging out and quitting...\n");
                 cmd_logout(sockfd);

@@ -42,4 +42,7 @@ int sat_alter_orbit(SatelliteDB *db, int sat_id, int x, int y, int z, int vx, in
 // formats a table of all satellites into a buffer, READ lock
 void sat_format_all(SatelliteDB *db, char *buffer, size_t max_len);
 
+// adds a new satellite and returns 1 on success, 0 if full
+int sat_add(SatelliteDB *db, int x, int y, int z, int vx, int vy, int vz);
+
 #endif

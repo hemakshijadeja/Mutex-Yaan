@@ -24,6 +24,9 @@ int gs_lock(GroundStationDB *db, int station_id);
 // releases the mutex of the given station
 int gs_unlock(GroundStationDB *db, int station_id);
 
+// formats a table of all active ground stations
+void gs_format_all(GroundStationDB *db, char *buffer, size_t max_len);
+
 // Copies the data of one station into out
 int gs_get(GroundStationDB *db, int station_id, GroundStation *out);
 

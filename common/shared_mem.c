@@ -31,6 +31,18 @@ SharedMemory *shm_setup(void){
     shm->alert_count = 0;
     shm->child_alive = 0;
     shm->server_pid = getpid();
+    
+    // initialise default demo debris
+    shm->debris_count = 6;
+    Debris default_debris[6] = {
+        {101,  7001,    5,    2,  -50,  7490,   10},
+        {102,   100, 8010, 1005, 7190,   -20,  195},
+        {103, -4995, 5003, 2001,-3010,  5995,   98},
+        {104,  3005,-5995,-1498,  998, -6998,  499},
+        {105, -1998,-3998, 6001,-4998,  2001,-2999},
+        {106,  6500,  300,  100,  200,  7400,   50}
+    };
+    memcpy(shm->debris_field, default_debris, sizeof(default_debris));
 
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
@@ -110,5 +122,53 @@ void shm_update_sat_positions(SharedMemory *shm, ShmSatSnapshot *snaps, int coun
     pthread_mutex_lock(&shm->lock);
     memcpy(shm->sat_positions, snaps, count * sizeof(ShmSatSnapshot));
     shm->sat_count = count;
+    pthread_mutex_unlock(&shm->lock);
+}
+
+int shm_add_debris(SharedMemory *shm, int x, int y, int z, int vx, int vy, int vz){
+    if(shm == NULL) return 0;
+    int success = 0;
+
+    pthread_mutex_lock(&shm->lock);
+    if(shm->debris_count < MAX_DEBRIS){
+        int idx = shm->debris_count;
+        shm->debris_field[idx].debris_id = 101 + idx; // sequential IDs
+        shm->debris_field[idx].x = x;
+        shm->debris_field[idx].y = y;
+        shm->debris_field[idx].z = z;
+        shm->debris_field[idx].vx = vx;
+        shm->debris_field[idx].vy = vy;
+        shm->debris_field[idx].vz = vz;
+        shm->debris_count++;
+        success = 1;
+    }
+    pthread_mutex_unlock(&shm->lock);
+    
+    return success;
+}
+
+#define APPEND(...) do { \
+    int n = snprintf(buffer + offset, max_len - offset, __VA_ARGS__); \
+    if (n > 0) offset += ((size_t)n < max_len - offset) ? (size_t)n : (max_len - offset); \
+} while(0)
+
+void shm_format_debris(SharedMemory *shm, char *buffer, size_t max_len){
+    if(shm == NULL || buffer == NULL || max_len == 0) return;
+    
+    size_t offset = 0;
+    APPEND("\n=== ACTIVE SPACE DEBRIS ===\n");
+    APPEND("ID   | Pos (x,y,z) km          | Vel (vx,vy,vz) m/s\n");
+    APPEND("---------------------------------------------------\n");
+
+    pthread_mutex_lock(&shm->lock);
+    if(shm->debris_count == 0){
+        APPEND("No debris currently tracked.\n");
+    } else {
+        for(int i = 0; i < shm->debris_count; i++){
+            Debris *d = &shm->debris_field[i];
+            APPEND("%-4d | %6d, %6d, %6d | %5d, %5d, %5d\n",
+                   d->debris_id, d->x, d->y, d->z, d->vx, d->vy, d->vz);
+        }
+    }
     pthread_mutex_unlock(&shm->lock);
 }
